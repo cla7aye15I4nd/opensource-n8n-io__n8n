@@ -173,19 +173,32 @@ export function createProductionConsoleLog(
 }
 
 const langchainModules = ['langchain', '@langchain/*'];
+const blockedLangchainModules = ['@langchain/mcp-adapters'];
+
+export function resolveLangchainModule(moduleName: string, parentDirname: string) {
+	if (
+		blockedLangchainModules.some(
+			(blockedModule) =>
+				moduleName === blockedModule || moduleName.startsWith(`${blockedModule}/`),
+		)
+	) {
+		throw new Error(`Module "${moduleName}" is not allowed`);
+	}
+
+	if (moduleName.match(/^langchain\//) ?? moduleName.match(/^@langchain\//)) {
+		return require.resolve(`@n8n/n8n-nodes-langchain/node_modules/${moduleName}.cjs`, {
+			paths: [parentDirname],
+		});
+	}
+	return;
+}
+
 export const vmResolver = makeResolverFromLegacyOptions({
 	external: {
 		modules: external ? [...langchainModules, ...external.split(',')] : [...langchainModules],
 		transitive: false,
 	},
-	resolve(moduleName, parentDirname) {
-		if (moduleName.match(/^langchain\//) ?? moduleName.match(/^@langchain\//)) {
-			return require.resolve(`@n8n/n8n-nodes-langchain/node_modules/${moduleName}.cjs`, {
-				paths: [parentDirname],
-			});
-		}
-		return;
-	},
+	resolve: resolveLangchainModule,
 	builtin: builtIn?.split(',') ?? [],
 });
 
