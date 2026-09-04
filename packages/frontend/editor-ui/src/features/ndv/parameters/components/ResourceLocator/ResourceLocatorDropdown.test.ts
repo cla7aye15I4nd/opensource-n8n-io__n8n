@@ -119,8 +119,9 @@ describe('ResourceLocatorDropdown', () => {
 	});
 
 	describe('cached result display', () => {
-		it('should show cached result when selected item is not in resources list', async () => {
+		it('should show and open a supported cached result URL', async () => {
 			vi.useFakeTimers();
+			const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 
 			const cachedModelValue: INodeParameterResourceLocator = {
 				__rl: true,
@@ -153,7 +154,47 @@ describe('ResourceLocatorDropdown', () => {
 				// Verify the external link icon is present after hover
 				const linkIcon = cachedItem.querySelector('svg[data-icon="external-link"]');
 				expect(linkIcon).toBeInTheDocument();
+				await fireEvent.click(linkIcon as Element);
+				expect(openSpy).toHaveBeenCalledWith(
+					'/workflow/workflow-cached',
+					'_blank',
+					'noopener,noreferrer',
+				);
 			}
+
+			openSpy.mockRestore();
+		});
+
+		it('should ignore an unsupported cached result URL', async () => {
+			vi.useFakeTimers();
+			const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+			const cachedModelValue: INodeParameterResourceLocator = {
+				__rl: true,
+				value: 'workflow-cached',
+				mode: 'list',
+				cachedResultName: 'Cached Workflow',
+				cachedResultUrl: 'javascript:alert(document.domain)',
+			};
+
+			renderComponent({
+				props: {
+					show: true,
+					resources: mockResources,
+					modelValue: cachedModelValue,
+				},
+			});
+
+			const cachedItem = screen.getByText('Cached Workflow').closest('[data-test-id="rlc-item"]');
+			expect(cachedItem).toBeInTheDocument();
+			await fireEvent.mouseEnter(cachedItem as Element);
+			await vi.advanceTimersByTimeAsync(250);
+
+			const linkIcon = cachedItem?.querySelector('svg[data-icon="external-link"]');
+			expect(linkIcon).toBeInTheDocument();
+			await fireEvent.click(linkIcon as Element);
+
+			expect(openSpy).not.toHaveBeenCalled();
+			openSpy.mockRestore();
 		});
 
 		it('should prioritize actual resource over cached when both exist', () => {

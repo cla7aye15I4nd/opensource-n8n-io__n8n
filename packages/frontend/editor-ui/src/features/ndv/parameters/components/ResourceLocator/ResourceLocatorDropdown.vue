@@ -2,6 +2,7 @@
 import { useDebounce } from '@n8n/composables/useDebounce';
 import type { IResourceLocatorResultExpanded } from '@/Interface';
 import { N8nBadge, N8nIcon, N8nInput, N8nLoading, N8nPopover, N8nText } from '@n8n/design-system';
+import { openSafeUrl } from '@n8n/frontend-utils/htmlUtils';
 import { useI18n } from '@n8n/i18n';
 import type { EventBus } from '@n8n/utils/event-bus';
 import { createEventBus } from '@n8n/utils/event-bus';
@@ -144,7 +145,7 @@ function openUrl(event: MouseEvent, url: string) {
 	event.preventDefault();
 	event.stopPropagation();
 
-	window.open(url, '_blank');
+	openSafeUrl(url);
 }
 
 function onKeyDown(e: KeyboardEvent) {
