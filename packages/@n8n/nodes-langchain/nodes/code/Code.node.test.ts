@@ -4,9 +4,21 @@ import {
 	transformLegacyLangchainImport,
 	createSandboxLogger,
 	createProductionConsoleLog,
+	resolveLangchainModule,
 } from './Code.node';
 
 describe('Code.node', () => {
+	describe('resolveLangchainModule', () => {
+		it.each(['@langchain/mcp-adapters', '@langchain/mcp-adapters/index'])(
+			'should reject unsupported module %s',
+			(moduleName) => {
+				expect(() => resolveLangchainModule(moduleName, __dirname)).toThrow(
+					`Module "${moduleName}" is not allowed`,
+				);
+			},
+		);
+	});
+
 	describe('createSandboxLogger', () => {
 		const logLevelKeys = LOG_LEVELS.filter((level) => level !== 'silent');
 
